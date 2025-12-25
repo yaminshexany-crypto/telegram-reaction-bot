@@ -1,0 +1,16 @@
+- name: Deploy to Koyeb (optional)
+  if: ${{ secrets.KOYEB_TOKEN && secrets.KOYEB_SERVICE_ID }}
+  run: |
+    echo "Deploying to Koyeb..."
+    resp=$(curl -s -w "\n%{http_code}" -X POST "https://app.koyeb.com/api/v1/services/${{ secrets.KOYEB_SERVICE_ID }}/deployments" \
+      -H "Authorization: Bearer ${{ secrets.KOYEB_TOKEN }}" \
+      -H "Content-Type: application/json" \
+      -d '{"container": {"image": "ghcr.io/'"${{ github.repository_owner }}"'/telegram-reaction-bot:latest"}}')
+    echo "RESPONSE:"
+    echo "$resp"
+    # exit non-zero if HTTP code not 2xx
+    http_code=$(echo "$resp" | tail -n1)
+    if [[ "$http_code" != 2* ]]; then
+      echo "Koyeb deploy failed with HTTP $http_code"
+      exit 1
+    fi
